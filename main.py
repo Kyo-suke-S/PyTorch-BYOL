@@ -10,7 +10,7 @@ from models.resnet_base_network import ResNet18
 from trainer import BYOLTrainer
 
 print(torch.__version__)
-torch.manual_seed(0)
+#torch.manual_seed(0)
 
 
 def main():
@@ -20,8 +20,9 @@ def main():
     print(f"Training with: {device}")
 
     data_transform = get_simclr_data_transforms(**config['data_transforms'])
+    data_dir = config['data']['data_dir']
 
-    train_dataset = datasets.STL10('/home/thalles/Downloads/', split='train+unlabeled', download=True,
+    train_dataset = datasets.STL10(data_dir, split='train+unlabeled', download=True,
                                    transform=MultiViewDataInjector([data_transform, data_transform]))
 
     # online network
@@ -61,6 +62,14 @@ def main():
 
     trainer.train(train_dataset)
 
+
+def torch_seed():
+    config = yaml.load(open("./config/config.yaml", "r"), Loader=yaml.FullLoader)
+    seed = config['seed']
+    torch.manual_seed(seed)
+    torch.cuda.manual_seed(seed)
+    torch.backends.cudnn.deterministic = True
+    torch.use_deterministic_algorithms = True
 
 if __name__ == '__main__':
     main()

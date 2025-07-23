@@ -1,11 +1,15 @@
 import os
+import logging
 import torch
 import torch.nn.functional as F
 import torchvision
 from torch.utils.data.dataloader import DataLoader
 from torch.utils.tensorboard import SummaryWriter
+from tqdm import tqdm
 
 from utils import _create_model_training_folder
+
+logging.getLogger("PIL.TiffImagePlugin").setLevel(logging.WARNING)
 
 
 class BYOLTrainer:
@@ -16,12 +20,14 @@ class BYOLTrainer:
         self.device = device
         self.predictor = predictor
         self.max_epochs = params['max_epochs']
+        self.no_tqdm = params['no_tqdm']
         self.writer = SummaryWriter()
         self.m = params['m']
         self.batch_size = params['batch_size']
         self.num_workers = params['num_workers']
         self.checkpoint_interval = params['checkpoint_interval']
-        _create_model_training_folder(self.writer, files_to_same=["./config/config.yaml", "main.py", 'trainer.py'])
+        _create_model_training_folder(self.writer, files_to_same=["./config/config.yaml"])#, "main.py", 'trainer.py'])
+        logging.basicConfig(filename=os.path.join(self.writer.log_dir, 'training.log'), level=logging.DEBUG)
 
     @torch.no_grad()
     def _update_target_network_parameters(self):
@@ -52,10 +58,15 @@ class BYOLTrainer:
         model_checkpoints_folder = os.path.join(self.writer.log_dir, 'checkpoints')
 
         self.initializes_target_network()
+        logging.info(f"Start BYOL training for {self.max_epochs} epochs.")
+        logging.info(f"Training with gpu: {self.device}.")
 
-        for epoch_counter in range(self.max_epochs):
+        for epoch_counter in tqdm(range(self.max_epochs), disable=self.no_tqdm):
+            total_loss = 0.0
+            counter = 0
 
             for (batch_view_1, batch_view_2), _ in train_loader:
+                counter += 1
 
                 batch_view_1 = batch_view_1.to(self.device)
                 batch_view_2 = batch_view_2.to(self.device)
@@ -76,8 +87,14 @@ class BYOLTrainer:
 
                 self._update_target_network_parameters()  # update the key encoder
                 niter += 1
+                total_loss += loss.item()
 
-            print("End of epoch {}".format(epoch_counter))
+            total_loss /= counter
+            logging.debug(f"Epoch: {epoch_counter}\tLoss: {total_loss}")
+            if self.no_tqdm:
+                print("End of epoch {}, loss {}".format(epoch_counter, total_loss))
+        
+        logging.info("Training has finished.")
 
         # save checkpoints
         self.save_model(os.path.join(model_checkpoints_folder, 'model.pth'))

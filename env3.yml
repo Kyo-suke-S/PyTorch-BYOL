@@ -1,0 +1,13 @@
+name: byol
+channels:
+  - conda-forge
+  - defaults
+dependencies:
+  - python=3.9
+  - numpy  # バージョン指定を外して柔軟に
+  - opencv
+  - pillow
+  - pip
+  - tensorboard
+  - scikit-learn
+  - pyyaml

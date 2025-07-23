@@ -18,9 +18,15 @@ trainer:
   checkpoint_interval: 5000
   max_epochs: 40
   num_workers: 4
+  no_tqdm: False
 
 optimizer:
   params:
     lr: 0.03
     momentum: 0.9
     weight_decay: 0.0004
+
+data:
+  data_dir: '/home/shirota/stl10/datasets'
+
+seed: 2

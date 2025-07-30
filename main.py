@@ -19,11 +19,16 @@ def main():
     device = 'cuda' if torch.cuda.is_available() else 'cpu'
     print(f"Training with: {device}")
 
-    data_transform = get_simclr_data_transforms(**config['data_transforms'])
+    data_transform = get_simclr_data_transforms(**config['data_transforms'])#224
     data_dir = config['data']['data_dir']
 
-    train_dataset = datasets.STL10(data_dir, split='train+unlabeled', download=True,
+    if config['data']['dataset_name'] == 'stl10':
+        train_dataset = datasets.STL10(data_dir, split='train+unlabeled', download=True,
                                    transform=MultiViewDataInjector([data_transform, data_transform]))
+        
+    elif config['data']['dataset_name'] == 'imagenet-100':
+        train_dataset = datasets.ImageFolder(data_dir,
+                                             transform=MultiViewDataInjector([data_transform, data_transform]))
 
     # online network
     online_network = ResNet18(**config['network']).to(device)
@@ -72,4 +77,5 @@ def torch_seed():
     torch.use_deterministic_algorithms = True
 
 if __name__ == '__main__':
+    torch_seed()
     main()

@@ -18,3 +18,4 @@ class ResNet18(torch.nn.Module):
         h = self.encoder(x)
         h = h.view(h.shape[0], h.shape[1])
         return self.projetion(h)
+    

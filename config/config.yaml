@@ -10,13 +10,13 @@ network:
 
 data_transforms:
   s: 1
-  input_shape: (96,96,3)
+  input_shape: (224,224,3)
 
 trainer:
   batch_size: 64
   m: 0.996 # momentum update
   checkpoint_interval: 5000
-  max_epochs: 40
+  max_epochs: 5
   num_workers: 4
   no_tqdm: False
 
@@ -27,6 +27,7 @@ optimizer:
     weight_decay: 0.0004
 
 data:
-  data_dir: '/home/shirota/stl10/datasets'
+  dataset_name: 'imagenet-100'
+  data_dir: '/home/shirota/ImageNet-100/train'
 
 seed: 2

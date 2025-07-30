@@ -61,6 +61,9 @@ class BYOLTrainer:
         logging.info(f"Start BYOL training for {self.max_epochs} epochs.")
         logging.info(f"Training with gpu: {self.device}.")
 
+        self.online_network.train()
+        self.predictor.train()
+
         for epoch_counter in tqdm(range(self.max_epochs), disable=self.no_tqdm):
             total_loss = 0.0
             counter = 0

@@ -8,17 +8,20 @@ network:
     mlp_hidden_size: 512
     projection_size: 128
 
+  encoded_img_size: 14
+
 data_transforms:
   s: 1
   input_shape: (224,224,3)
 
 trainer:
-  batch_size: 64
+  batch_size: 128
   m: 0.996 # momentum update
   checkpoint_interval: 5000
-  max_epochs: 5
+  max_epochs: 100
   num_workers: 4
-  no_tqdm: False
+  no_tqdm: True
+  atten_lambda: 0.01
 
 optimizer:
   params:
@@ -29,5 +32,9 @@ optimizer:
 data:
   dataset_name: 'imagenet-100'
   data_dir: '/home/shirota/ImageNet-100/train'
+
+method: 'byol_atten'
+atten_type: 'Dot'
+dim_atten: 128
 
 seed: 2

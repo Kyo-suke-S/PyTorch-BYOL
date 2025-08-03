@@ -8,7 +8,7 @@ from data.transforms import get_simclr_data_transforms
 from models.mlp_head import MLPHead
 from models.resnet_base_network import ResNet18, ResNet_withAttention
 from models.attention import NonLinear_Attention, Dot_Attention
-from trainer import BYOLTrainer, BYOLTrainer_withAttention
+from trainer import BYOLTrainer, BYOLTrainer_withAttention, BYOLTrainer_withAttention_atten_pp
 
 print(torch.__version__)
 #torch.manual_seed(0)
@@ -38,6 +38,8 @@ def main():
         online_network = ResNet_withAttention(**config['network']).to(device)
         dim_atten = config['dim_atten']
         projetion = MLPHead(in_channels=online_network.in_features, **config['network']['projection_head']).to(device)
+        if config['atten_pp']:
+            atten_projetion = MLPHead(in_channels=online_network.in_features, **config['network']['projection_head']).to(device)
         if config['atten_type'] == 'Non_Linear':
             attention = NonLinear_Attention(online_network.in_features, dim_atten).to(device)
         elif config['atten_type'] == 'Dot':
@@ -66,6 +68,9 @@ def main():
     elif config['method'] == 'byol_atten':
         predictor = MLPHead(in_channels=projetion.net[-1].out_features,
                         **config['network']['projection_head']).to(device)
+        if config['atten_pp']:
+            atten_predictor = MLPHead(in_channels=projetion.net[-1].out_features,
+                        **config['network']['projection_head']).to(device)
 
     # target encoder
     if config['method'] == 'byol':
@@ -82,11 +87,30 @@ def main():
     elif config['method'] == 'byol_atten':
         target_network = ResNet_withAttention(**config['network']).to(device)
         target_projetion = MLPHead(in_channels=online_network.in_features, **config['network']['projection_head']).to(device)
-        optimizer = torch.optim.SGD(list(online_network.parameters()) + list(projetion.parameters()) + list(predictor.parameters())
-                                    + list(attention.parameters()),
-                                **config['optimizer']['params'])
-        
-        trainer = BYOLTrainer_withAttention(online_network=online_network,
+        if config['atten_pp']:
+            target_atten_projetion = MLPHead(in_channels=online_network.in_features, **config['network']['projection_head']).to(device)
+            optimizer = torch.optim.SGD(list(online_network.parameters()) + list(projetion.parameters()) + list(predictor.parameters())
+                                        + list(atten_projetion.parameters()) + list(atten_predictor.parameters())
+                                        + list(attention.parameters()),
+                                        **config['optimizer']['params'])
+            
+            trainer = BYOLTrainer_withAttention_atten_pp(online_network=online_network,
+                          target_network=target_network,
+                          optimizer=optimizer,
+                          projetion=projetion,
+                          atten_projetion=atten_projetion,
+                          target_projetion=target_projetion,
+                          target_atten_projetion=target_atten_projetion,
+                          attention=attention,
+                          predictor=predictor,
+                          atten_predictor=atten_predictor,
+                          device=device,
+                          **config['trainer'])
+        else:
+            optimizer = torch.optim.SGD(list(online_network.parameters()) + list(projetion.parameters()) + list(predictor.parameters())
+                                        + list(attention.parameters()),
+                                        **config['optimizer']['params'])
+            trainer = BYOLTrainer_withAttention(online_network=online_network,
                           target_network=target_network,
                           optimizer=optimizer,
                           projetion=projetion,

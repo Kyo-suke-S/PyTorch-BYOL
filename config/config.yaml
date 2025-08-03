@@ -21,7 +21,10 @@ trainer:
   max_epochs: 100
   num_workers: 4
   no_tqdm: True
-  atten_lambda: 0.01
+  max_atten_lambda: 0.01
+  schedule_atten_lambda: False
+  stop_update_atten_lambda: 90
+
 
 optimizer:
   params:
@@ -35,6 +38,7 @@ data:
 
 method: 'byol_atten'
 atten_type: 'Dot'
+atten_pp: True
 dim_atten: 128
 
 seed: 2
